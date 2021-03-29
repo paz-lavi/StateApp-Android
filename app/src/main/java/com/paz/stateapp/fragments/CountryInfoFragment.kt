@@ -78,11 +78,6 @@ class CountryInfoFragment() : Fragment() {
                     } as ArrayList<CountryModel?>)
                 }
 
-            } else { // try again after 0.5 sec
-                Handler(Looper.getMainLooper()).postDelayed({
-                    Log.d("pttt", "getCountries: ")
-                    getBorders()
-                }, 500)
             }
         }
 

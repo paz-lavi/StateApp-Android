@@ -1,14 +1,16 @@
 package com.paz.stateapp.fragments
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -24,6 +26,31 @@ class CountriesListFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var listener: CountrySelectedCallback
     private lateinit var _adapter: CountryListAdapter
+    private val receiver = object : BroadcastReceiver() {
+
+        override fun onReceive(context: Context, intent: Intent) {
+            getCountries()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (!DataManager.instance.isDataReady()) {
+            activity?.let {
+                LocalBroadcastManager.getInstance(it.applicationContext)
+                    .registerReceiver(receiver, IntentFilter("data_ready"))
+            }
+        }
+    }
+
+
+    override fun onStop() {
+        super.onStop()
+        activity?.let {
+            LocalBroadcastManager.getInstance(it.applicationContext).unregisterReceiver(receiver)
+        }
+
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,8 +65,8 @@ class CountriesListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        getCountries()
+        if (DataManager.instance.isDataReady())
+            getCountries()
         onSwipe()
     }
 
@@ -48,10 +75,11 @@ class CountriesListFragment : Fragment() {
         _binding = null
     }
 
+
     /** get all countries and add them to the list*/
     private fun getCountries() {
         DataManager.instance.apply {
-            if (isDataReady()) { // if data already available
+            if (isDataReady()) {
                 binding.countriesLSTAll.apply {
                     setHasFixedSize(true)
                     layoutManager = LinearLayoutManager(activity)
@@ -59,10 +87,6 @@ class CountriesListFragment : Fragment() {
                     adapter = _adapter
                 }
                 binding.countriesLAYLoading.visibility = GONE
-            } else { // try again after 0.5 sec
-                Handler(Looper.getMainLooper()).postDelayed({
-                    getCountries()
-                }, 500)
             }
         }
 
@@ -85,7 +109,7 @@ class CountriesListFragment : Fragment() {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.menu_main, menu)
 
-        val item = menu.findItem(R.id.action_search);
+        val item = menu.findItem(R.id.action_search)
         val searchView = item?.actionView as SearchView
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {

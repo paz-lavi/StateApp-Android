@@ -7,6 +7,6 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         // create an instance. this call will start the networking task (loading the data)
-        DataManager.instance
+        DataManager.instance.startNetworkTask(context = applicationContext)
     }
 }

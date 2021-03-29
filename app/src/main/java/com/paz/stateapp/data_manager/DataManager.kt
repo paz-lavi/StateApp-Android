@@ -1,5 +1,8 @@
 package com.paz.stateapp.data_manager
 
+import android.content.Context
+import android.content.Intent
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.paz.stateapp.callbacks.DataReadyCallback
 import com.paz.stateapp.model.CountryModel
 import com.paz.stateapp.rest.RestClient
@@ -12,10 +15,6 @@ class DataManager private constructor() {
         val INSTANCE = DataManager()
         lateinit var countries: ArrayList<CountryModel?>
 
-        init {
-            // perform the network request
-            getCountries()
-        }
 
         /** Check if a lateinit var (countries) is already initialized */
         fun isInit(): Boolean {
@@ -24,10 +23,17 @@ class DataManager private constructor() {
 
         /** perform the API request task.
          * save results*/
-        private fun getCountries() {
+        fun getCountries(context: Context) {
             RestClient.getCountryData(object : DataReadyCallback {
                 override fun onDataReady(list: ArrayList<CountryModel?>) {
                     countries = list
+                    Intent().also { intent ->
+                        intent.action = "data_ready"
+                        intent.putExtra("data", "Nothing to see here, move along.")
+                        LocalBroadcastManager.getInstance(context.applicationContext)
+                            .sendBroadcast(intent)
+                    }
+
                 }
             })
         }
@@ -37,6 +43,10 @@ class DataManager private constructor() {
         val instance: DataManager by lazy {
             HOLDER.INSTANCE
         }
+    }
+
+    fun startNetworkTask(context: Context) {
+        HOLDER.getCountries(context)
     }
 
     /** check if countries data id ready */
