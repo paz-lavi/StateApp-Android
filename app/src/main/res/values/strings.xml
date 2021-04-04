@@ -3,4 +3,6 @@
     <string name="borders">Borders List:</string>
     <string name="loading">Loading data</string>
     <string name="wait">Please Wait</string>
+    <string name="close">Close</string>
+    <string name="reTry">Re-Try</string>
 </resources>

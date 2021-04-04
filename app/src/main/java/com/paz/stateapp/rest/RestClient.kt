@@ -4,6 +4,8 @@ import android.util.Log
 import com.paz.stateapp.callbacks.DataReadyCallback
 import com.paz.stateapp.model.CountryModel
 import okhttp3.OkHttpClient
+import org.json.JSONException
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -37,14 +39,30 @@ class RestClient {
                     if (response.isSuccessful) {
                         Log.d(TAG, "isSuccessful: ")
                         // notify
-                        _mCallback.onDataReady(response.body()!! )
+                        _mCallback.onDataReady(response.body()!!)
                     } else {
-                        Log.d(TAG, "error: ${response.raw()} ")
+                        var msg = ""
+                        msg = try {
+                            JSONObject(
+                                response.errorBody().toString()
+                            )
+                                .getJSONObject("error").getString("message")
+
+                        } catch (e: JSONException) {
+                            "Failed to parse error body"
+
+                        } finally {
+                            Log.d(TAG, "error: ${response.raw()} ")
+                            _mCallback.onError(
+                                response.code(), msg
+                            )
+                        }
                     }
                 }
 
                 override fun onFailure(call: Call<ArrayList<CountryModel?>?>, t: Throwable) {
                     Log.e(TAG, "onFailure: ${t.printStackTrace()}")
+                    _mCallback.onFailure(if (t.localizedMessage != null) t.localizedMessage else "unknown exception")
                 }
             })
         }

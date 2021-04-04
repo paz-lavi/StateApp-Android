@@ -8,17 +8,22 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.gson.Gson
 import com.paz.stateapp.R
 import com.paz.stateapp.adapters.CountryListAdapter
 import com.paz.stateapp.callbacks.CountrySelectedCallback
 import com.paz.stateapp.data_manager.DataManager
 import com.paz.stateapp.databinding.FragmentCountriesListBinding
+import com.paz.stateapp.model.ApiResponse
+import com.paz.stateapp.model.ResponseType
 
 /** countries list fragment*/
 class CountriesListFragment : Fragment() {
@@ -29,16 +34,23 @@ class CountriesListFragment : Fragment() {
     private val receiver = object : BroadcastReceiver() {
 
         override fun onReceive(context: Context, intent: Intent) {
-            getCountries()
+            val res = Gson().fromJson(intent.getStringExtra("res"), ApiResponse::class.java)
+            when (res.type) {
+                ResponseType.SUCCESS -> getCountries()
+                ResponseType.ERROR -> onError(res.statusCode, res.errorMsg)
+                ResponseType.EXCEPTION -> onException(res.errorMsg)
+            }
+
         }
     }
+
 
     override fun onStart() {
         super.onStart()
         if (!DataManager.instance.isDataReady()) {
             activity?.let {
                 LocalBroadcastManager.getInstance(it.applicationContext)
-                    .registerReceiver(receiver, IntentFilter("data_ready"))
+                    .registerReceiver(receiver, IntentFilter("onDataReady"))
             }
         }
     }
@@ -161,5 +173,34 @@ class CountriesListFragment : Fragment() {
 
         val itemTouchHelper = ItemTouchHelper(simpleItemTouchCallback)
         itemTouchHelper.attachToRecyclerView(binding.countriesLSTAll)
+    }
+
+    private fun onException(errorMsg: String?) {
+        val str = "failed to load data from server\nerror: $errorMsg"
+        showErrorDialog(str)
+
+    }
+
+    private fun onError(statusCode: Int?, errorMsg: String?) {
+        val str = "failed to load data from server\nstatus code: $statusCode\nerror: $errorMsg"
+        showErrorDialog(str)
+    }
+
+    private fun showErrorDialog(str: String) {
+        binding.countriesLAYLoading.visibility = GONE
+        activity.let {
+            if (it != null) {
+                if (it.application != null)
+                    MaterialAlertDialogBuilder(it).setMessage(str)
+                        .setNegativeButton(resources.getString(R.string.close), null)
+                        .setPositiveButton(resources.getString(R.string.reTry)) { _, _ ->
+                            DataManager.instance.startNetworkTask(it.applicationContext)
+                            binding.countriesLAYLoading.visibility = VISIBLE
+
+                        }
+                        .show()
+            }
+        }
+
     }
 }
