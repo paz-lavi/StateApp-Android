@@ -7,7 +7,4 @@ data class CountryModel(
     val flag: String,
     val alpha3Code: String,
     val borders: List<String>
-) {
-
-
-}
+)

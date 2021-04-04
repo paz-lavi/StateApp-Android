@@ -2,9 +2,6 @@ package com.paz.stateapp.fragments
 
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +15,7 @@ import com.paz.stateapp.adapters.BorderListAdapter
 import com.paz.stateapp.data_manager.DataManager
 import com.paz.stateapp.databinding.FragmentCountryInfoBinding
 import com.paz.stateapp.model.CountryModel
+
 /** Country info fragment*/
 class CountryInfoFragment() : Fragment() {
     private var _binding: FragmentCountryInfoBinding? = null
@@ -66,21 +64,19 @@ class CountryInfoFragment() : Fragment() {
         _binding = null
     }
 
-/** Find all the countries bordering the country and show them*/
+    /** Find all the countries bordering the country and show them*/
     private fun getBorders() {
-        DataManager.instance.apply {
-            if (isDataReady() && country != null) { // if data already available
+        DataManager.getCountriesList()?.let {
+            if (country != null) { // if data already available
                 binding.infoLSTBorders.apply {
                     setHasFixedSize(true)
                     layoutManager = LinearLayoutManager(activity)
-                    adapter = BorderListAdapter(getCountriesList().filter { countryModel ->
+                    adapter = BorderListAdapter(it.filter { countryModel ->
                         countryModel?.alpha3Code in country!!.borders
                     } as ArrayList<CountryModel?>)
                 }
-
             }
         }
-
 
     }
 

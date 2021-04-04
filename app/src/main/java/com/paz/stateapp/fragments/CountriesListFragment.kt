@@ -40,14 +40,13 @@ class CountriesListFragment : Fragment() {
                 ResponseType.ERROR -> onError(res.statusCode, res.errorMsg)
                 ResponseType.EXCEPTION -> onException(res.errorMsg)
             }
-
         }
     }
 
 
     override fun onStart() {
         super.onStart()
-        if (!DataManager.instance.isDataReady()) {
+        if (!DataManager.isDataReady()) {
             activity?.let {
                 LocalBroadcastManager.getInstance(it.applicationContext)
                     .registerReceiver(receiver, IntentFilter("onDataReady"))
@@ -77,7 +76,7 @@ class CountriesListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (DataManager.instance.isDataReady())
+        if (DataManager.isDataReady())
             getCountries()
         onSwipe()
     }
@@ -90,19 +89,17 @@ class CountriesListFragment : Fragment() {
 
     /** get all countries and add them to the list*/
     private fun getCountries() {
-        DataManager.instance.apply {
-            if (isDataReady()) {
-                binding.countriesLSTAll.apply {
-                    setHasFixedSize(true)
-                    layoutManager = LinearLayoutManager(activity)
-                    _adapter = CountryListAdapter(getCountriesList(), listener)
-                    adapter = _adapter
-                }
-                binding.countriesLAYLoading.visibility = GONE
+        DataManager.getCountriesList()?.let {
+            binding.countriesLSTAll.apply {
+                setHasFixedSize(true)
+                layoutManager = LinearLayoutManager(activity)
+                _adapter = CountryListAdapter(it, listener)
+                adapter = _adapter
             }
+            binding.countriesLAYLoading.visibility = GONE
         }
-
     }
+
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -194,7 +191,7 @@ class CountriesListFragment : Fragment() {
                     MaterialAlertDialogBuilder(it).setMessage(str)
                         .setNegativeButton(resources.getString(R.string.close), null)
                         .setPositiveButton(resources.getString(R.string.reTry)) { _, _ ->
-                            DataManager.instance.startNetworkTask(it.applicationContext)
+                            DataManager.startNetworkTask(it.applicationContext)
                             binding.countriesLAYLoading.visibility = VISIBLE
 
                         }

@@ -5,6 +5,3 @@ data class ApiResponse(
     val errorMsg: String?,
     val type: ResponseType,
 )
-{
-
-}
